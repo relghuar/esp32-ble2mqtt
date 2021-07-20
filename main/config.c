@@ -59,6 +59,44 @@ static char *read_file(const char *path)
     return buf;
 }
 
+/* RMT Configuration*/
+int8_t config_rmt_rx_pin()
+{
+    cJSON *rmt = cJSON_GetObjectItemCaseSensitive(config, "rmt");
+    if (rmt == NULL)
+        return -1;
+
+    cJSON *rx_pin = cJSON_GetObjectItemCaseSensitive(rmt, "rx_pin");
+    if (cJSON_IsNumber(rx_pin))
+        return rx_pin->valuedouble;
+
+    return -1;
+}
+
+int config_rmt_rx_thr_idle_us() {
+    cJSON *rmt = cJSON_GetObjectItemCaseSensitive(config, "rmt");
+    if (rmt == NULL)
+        return -1;
+
+    cJSON *rx_idle = cJSON_GetObjectItemCaseSensitive(rmt, "rx_thr_idle_us");
+    if (cJSON_IsNumber(rx_idle))
+        return rx_idle->valuedouble;
+
+    return -1;
+}
+
+int config_rmt_rx_thr_ignore_us() {
+    cJSON *rmt = cJSON_GetObjectItemCaseSensitive(config, "rmt");
+    if (rmt == NULL)
+        return -1;
+
+    cJSON *rx_ignore = cJSON_GetObjectItemCaseSensitive(rmt, "rx_thr_ignore_us");
+    if (cJSON_IsNumber(rx_ignore))
+        return rx_ignore->valuedouble;
+
+    return -1;
+}
+
 /* BLE Configuration*/
 static cJSON *config_ble_get_name_by_uuid(uint8_t is_service,
     const char *uuid, const char *field_name)

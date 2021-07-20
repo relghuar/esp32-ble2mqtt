@@ -7,7 +7,9 @@
 #include "log.h"
 #include "mqtt.h"
 #include "ota.h"
+#include "rcscan.h"
 #include "resolve.h"
+#include "rmt.h"
 #include "wifi.h"
 #include <esp_err.h>
 #include <esp_log.h>
@@ -248,6 +250,40 @@ static void mqtt_on_disconnected(void)
         ESP_LOGI(TAG,
             "Failed connecting to MQTT 3 times, reconnecting to the network");
         wifi_reconnect();
+    }
+}
+
+/* RMT functions */
+// We expect this function to receive at least 16 items! Shorter chains never
+// come from any remote transmitter and MUST be filtered out before this point.
+static void rmt_on_rx_items_received(uint64_t rxt_us, size_t num_items,
+    rmt_item32_t *items)
+{
+    char dbuf[1000];  // max 800b for pulses + some header
+    char *dbufp = dbuf;
+    dbufp += sprintf(dbufp, "[%llu] (%d:%d)",
+            rxt_us/1000, num_items, items[0].level0);
+    for (int i=0; i<num_items && i<100; i++)
+        dbufp += sprintf(dbufp, " %d+%d",
+            items[i].duration0/10, items[i].duration1/10);
+    ESP_LOGD(TAG, "RMT RX%s", dbuf);
+
+    char dtopic[MAX_TOPIC_LEN];
+    snprintf(dtopic, MAX_TOPIC_LEN, "%s/rcscan", device_name_get());
+    mqtt_publish(dtopic, (uint8_t *)dbuf, strlen(dbuf), config_mqtt_qos_get(), 0);
+
+    uint64_t val = 0;
+    size_t bits = 0;
+    rc_protocol_t *proto = rc_decode_signal(num_items*2, (rc_pulse_t*)items, &bits, &val);
+    if (proto != NULL && !rc_signal_duplicate(rxt_us, proto, bits, val))
+    {
+        ESP_LOGI(TAG, "RC-Proto[%d] (%d):%8X:%08X",
+            proto->id, bits, (uint32_t)(val>>32), (uint32_t)val);
+        char topic[MAX_TOPIC_LEN];
+        snprintf(topic, MAX_TOPIC_LEN, "%s/rcscan/%d", device_name_get(), proto->id);
+        char msg[32];
+        snprintf(msg, 32, "%d:%X:%08X", bits, (uint32_t)(val>>32), (uint32_t)val);
+        mqtt_publish(topic, (uint8_t *)msg, strlen(msg), config_mqtt_qos_get(), 0);
     }
 }
 
@@ -512,6 +548,7 @@ typedef enum {
     EVENT_TYPE_BLE_MQTT_CONNECTED,
     EVENT_TYPE_BLE_MQTT_GET,
     EVENT_TYPE_BLE_MQTT_SET,
+    EVENT_TYPE_RMT_RX_RECEIVED,
 } event_type_t;
 
 typedef struct {
@@ -554,6 +591,11 @@ typedef struct {
             uint8_t *value;
             size_t value_len;
         } ble_device_characteristic_value;
+        struct {
+            uint64_t rxt_us;
+            size_t num_items;
+            rmt_item32_t *items;
+        } rmt_rx_received;
     };
 } event_t;
 
@@ -643,6 +685,11 @@ static void ble2mqtt_handle_event(event_t *event)
         free(event->mqtt_message.topic);
         free(event->mqtt_message.payload);
         break;
+    case EVENT_TYPE_RMT_RX_RECEIVED:
+	rmt_on_rx_items_received(event->rmt_rx_received.rxt_us,
+            event->rmt_rx_received.num_items, event->rmt_rx_received.items);
+	free(event->rmt_rx_received.items);
+	break;
     }
 
     free(event);
@@ -773,6 +820,30 @@ static void _mqtt_on_disconnected(void)
     event->type = EVENT_TYPE_MQTT_DISCONNECTED;
 
     ESP_LOGD(TAG, "Queuing event MQTT_DISCONNECTED");
+    xQueueSend(event_queue, &event, portMAX_DELAY);
+}
+
+static void _rmt_on_rx_items_received(uint64_t rxt_us, size_t num_items,
+    rmt_item32_t *items)
+{
+    event_t *event = malloc(sizeof(*event));
+    if (event == NULL) {
+        ESP_LOGE(TAG, "RX_RECEIVED event alloc failed!");
+	return;
+    }
+
+    event->type = EVENT_TYPE_RMT_RX_RECEIVED;
+    event->rmt_rx_received.rxt_us = rxt_us;
+    event->rmt_rx_received.num_items = num_items;
+    event->rmt_rx_received.items = malloc(num_items*sizeof(rmt_item32_t));
+    if (event->rmt_rx_received.items == NULL) {
+        ESP_LOGE(TAG, "RX_RECEIVED items alloc failed!");
+	return;
+    }
+
+    memcpy(event->rmt_rx_received.items, items, num_items*sizeof(rmt_item32_t));
+
+    ESP_LOGD(TAG, "Queuing event RMT_RX_RECEIVED (%llu, %d)", rxt_us, num_items);
     xQueueSend(event_queue, &event, portMAX_DELAY);
 }
 
@@ -952,6 +1023,10 @@ void app_main()
     /* Init web server */
     ESP_ERROR_CHECK(httpd_initialize());
     httpd_set_on_ota_completed_cb(_ota_on_completed);
+
+    /* Init RMT */
+    rmt_initialize();
+    rmt_set_on_rx_items_received_cb(_rmt_on_rx_items_received);
 
     /* Start BLE2MQTT task */
     ESP_ERROR_CHECK(start_ble2mqtt_task());

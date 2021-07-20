@@ -11,6 +11,11 @@ typedef enum config_network_type_t {
     NETWORK_TYPE_ETH,
 } config_network_type_t;
 
+/* RMT Configuration*/
+int8_t config_rmt_rx_pin();
+int config_rmt_rx_thr_idle_us();
+int config_rmt_rx_thr_ignore_us();
+
 /* BLE Configuration*/
 const char *config_ble_service_name_get(const char *uuid);
 const char *config_ble_characteristic_name_get(const char *uuid);
