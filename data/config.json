@@ -13,5 +13,10 @@
     "publish": {
       "retain": true
     }
+  },
+  "rmt": {
+    "rx_pin": 12,
+    "rx_thr_ignore_us": 150,
+    "rx_thr_idle_us": 5000
   }
 }
