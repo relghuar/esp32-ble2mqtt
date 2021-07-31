@@ -263,9 +263,9 @@ static void rmt_on_rx_items_received(uint64_t rxt_us, size_t num_items,
     char *dbufp = dbuf;
     dbufp += sprintf(dbufp, "[%llu] (%d:%d)",
             rxt_us/1000, num_items, items[0].level0);
-    for (int i=0; i<num_items && i<100; i++)
+    for (int i=0; i<num_items && i<80; i++)
         dbufp += sprintf(dbufp, " %d+%d",
-            items[i].duration0/10, items[i].duration1/10);
+            items[i].duration0, items[i].duration1);
     ESP_LOGD(TAG, "RMT RX%s", dbuf);
 
     char dtopic[MAX_TOPIC_LEN];

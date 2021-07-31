@@ -31,11 +31,12 @@ typedef struct rc_protocol_s {
             high_low_t zero;
             high_low_t one;
             bool inverted;
+	    bool add_last_pulse;
         } pwm;
     };
 } rc_protocol_t;
 
-#define PTYPE_PWMSS 1
+#define PTYPE_PWM 1
 
 rc_protocol_t *rc_decode_signal(size_t num_pulses, rc_pulse_t *pulses,
     size_t *num_bits, uint64_t *value);
