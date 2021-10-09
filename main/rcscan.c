@@ -8,21 +8,21 @@ static const char *TAG = "RCSCAN";
 
 static rc_protocol_t rc_protocols[] = {
 //  { id, type,   tol_per, .pwm = { plen_us, sync-hl, zero-hl, one-hl, inverted, add-last }, },
-    {  1, PTYPE_PWM, 25, .pwm = { 350, {  1, 31 }, {  1,  3 }, {  3,  1 }, false, false }, },    // protocol 1
-    {  2, PTYPE_PWM, 25, .pwm = { 650, {  1, 10 }, {  1,  2 }, {  2,  1 }, false, false }, },    // protocol 2
-    {  3, PTYPE_PWM, 25, .pwm = { 100, { 30, 71 }, {  4, 11 }, {  9,  6 }, false, false }, },    // protocol 3
-    {  4, PTYPE_PWM, 25, .pwm = { 380, {  2,  6 }, {  1,  3 }, {  3,  1 }, false, false }, },    // protocol 4
-    {  5, PTYPE_PWM, 25, .pwm = { 500, {  6, 14 }, {  1,  2 }, {  2,  1 }, false, false }, },    // protocol 5
-    {  6, PTYPE_PWM, 25, .pwm = { 450, { 23,  1 }, {  1,  2 }, {  2,  1 }, true , false }, },    // protocol 6 (HT6P20B)
-    {  7, PTYPE_PWM, 25, .pwm = { 150, {  2, 62 }, {  1,  6 }, {  6,  1 }, false, false }, },    // protocol 7 (HS2303-PT, i. e. used in AUKEY Remote)
-    {  8, PTYPE_PWM, 25, .pwm = { 200, {  3, 130}, {  7, 16 }, {  3, 16 }, false, false }, },    // protocol 8 Conrad RS-200 RX
-    {  9, PTYPE_PWM, 25, .pwm = { 200, { 130, 7 }, {  16, 7 }, { 16,  3 }, true , false }, },    // protocol 9 Conrad RS-200 TX
-    { 10, PTYPE_PWM, 25, .pwm = { 365, { 18,  1 }, {  3,  1 }, {  1,  3 }, true , false }, },    // protocol 10 (1ByOne Doorbell)
-    { 11, PTYPE_PWM, 25, .pwm = { 270, { 36,  1 }, {  1,  2 }, {  2,  1 }, true , false }, },    // protocol 11 (HT12E)
-    { 12, PTYPE_PWM, 25, .pwm = { 320, { 36,  1 }, {  1,  2 }, {  2,  1 }, true , false }  },    // protocol 12 (SM5212)
-    {101, PTYPE_PWM, 25, .pwm = { 500, {  1, 18 }, {  1,  4 }, {  1,  8 }, false, false }, },    // protocol 101 (Prologue outdoor meteo sensor, temp+humi)
-    {102, PTYPE_PWM, 40, .pwm = { 333, {  1,  8 }, {  1,  2 }, {  2,  1 }, false, false }, },    // protocol 102 (Custom cesspit or soil sensor transmitter)
-    {103, PTYPE_PWM, 30, .pwm = { 500, {  1, 18 }, {  3,  2 }, {  1,  2 }, false, true  }, },    // protocol 103 (WH2 outdoor meteo sensor, temp+humi)
+    {  1, PTYPE_PWM, 60, .pwm = { 350, {  1, 31 }, {  1,  3 }, {  3,  1 }, false, false }, },    // protocol 1
+    {  2, PTYPE_PWM, 60, .pwm = { 650, {  1, 10 }, {  1,  2 }, {  2,  1 }, false, false }, },    // protocol 2
+//    {  3, PTYPE_PWM,100, .pwm = { 100, { 30, 71 }, {  4, 11 }, {  9,  6 }, false, false }, },    // protocol 3
+//    {  4, PTYPE_PWM, 60, .pwm = { 380, {  2,  6 }, {  1,  3 }, {  3,  1 }, false, false }, },    // protocol 4
+//    {  5, PTYPE_PWM, 50, .pwm = { 500, {  6, 14 }, {  1,  2 }, {  2,  1 }, false, false }, },    // protocol 5
+//    {  6, PTYPE_PWM, 50, .pwm = { 450, { 23,  1 }, {  1,  2 }, {  2,  1 }, true , false }, },    // protocol 6 (HT6P20B)
+//    {  7, PTYPE_PWM, 60, .pwm = { 150, {  2, 62 }, {  1,  6 }, {  6,  1 }, false, false }, },    // protocol 7 (HS2303-PT, i. e. used in AUKEY Remote)
+//    {  8, PTYPE_PWM,100, .pwm = { 200, {  3, 130}, {  7, 16 }, {  3, 16 }, false, false }, },    // protocol 8 Conrad RS-200 RX
+//    {  9, PTYPE_PWM,100, .pwm = { 200, { 130, 7 }, {  16, 7 }, { 16,  3 }, true , false }, },    // protocol 9 Conrad RS-200 TX
+//    { 10, PTYPE_PWM, 60, .pwm = { 365, { 18,  1 }, {  3,  1 }, {  1,  3 }, true , false }, },    // protocol 10 (1ByOne Doorbell)
+//    { 11, PTYPE_PWM, 50, .pwm = { 270, { 36,  1 }, {  1,  2 }, {  2,  1 }, true , false }, },    // protocol 11 (HT12E)
+//    { 12, PTYPE_PWM, 50, .pwm = { 320, { 36,  1 }, {  1,  2 }, {  2,  1 }, true , false }  },    // protocol 12 (SM5212)
+    {101, PTYPE_PWM, 60, .pwm = { 500, {  1, 18 }, {  1,  4 }, {  1,  8 }, false, false }, },    // protocol 101 (Prologue outdoor meteo sensor, temp+humi)
+    {102, PTYPE_PWM, 50, .pwm = { 333, {  1,  8 }, {  1,  2 }, {  2,  1 }, false, false }, },    // protocol 102 (Custom cesspit or soil sensor transmitter)
+    {103, PTYPE_PWM, 50, .pwm = { 500, {  1, 18 }, {  3,  2 }, {  1,  2 }, false, true  }, },    // protocol 103 (FineOffset WH-2 outdoor meteo sensor, temp+humi)
 };
 static size_t rc_protocol_count = sizeof(rc_protocols)/sizeof(rc_protocol_t);
 
@@ -31,22 +31,22 @@ static inline unsigned int diff(int A, int B)
     return abs(A - B);
 }
 
-static inline unsigned int tolerance(uint16_t len, uint8_t tolratio)
+static inline int tolerance(int len, int tolratio)
 {
     return (len*tolratio)/100;
 }
 
-static inline bool isInTolerance(uint16_t len, uint16_t pulse, uint8_t tolratio)
+static inline bool isInTolerance(int len, int pcnt, int plen, int tolratio)
 {
-    return ( diff(len, pulse) < tolerance(pulse, tolratio) );
+    return ( diff(len, pcnt*plen) < tolerance(plen, tolratio) );
 }
 
-static bool rc_pulse_match(uint16_t l1, uint16_t l2, int plen,
-    high_low_t *match, uint8_t tolratio, bool higher_tolerance, bool acc_zero)
+static bool rc_pulse_match(int l1, int l2, int plen,
+    high_low_t *match, int tolratio, bool higher_tolerance, bool acc_zero)
 {
-    if (!isInTolerance(l1, match->high*plen, higher_tolerance ? tolratio*2 : tolratio)) return false;
+    if (!isInTolerance(l1, match->high, plen, higher_tolerance ? tolratio*2 : tolratio)) return false;
     if (acc_zero && l2 == 0) return true;
-    if (isInTolerance(l2, match->low*plen, higher_tolerance ? tolratio*2 : tolratio)) return true;
+    if (isInTolerance(l2, match->low, plen, higher_tolerance ? tolratio*2 : tolratio)) return true;
     return false;
 }
 
