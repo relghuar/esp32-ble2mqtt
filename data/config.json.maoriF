@@ -27,7 +27,7 @@
   },
   "rmt": {
     "rx_pin": 12,
-    "rx_thr_ignore_us": 200,
-    "rx_thr_idle_us": 4500
+    "rx_thr_ignore_us": 250,
+    "rx_thr_idle_us": 5000
   }
 }

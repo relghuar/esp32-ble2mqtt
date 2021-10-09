@@ -1,13 +1,13 @@
 {
   "network": {
     "wifi": {
-      "ssid": "maoriF",
-      "password": "cokoladovatorta"
+      "ssid": "homenet-iot-test",
+      "password": "testIoTnetwork89&#"
     }
   },
   "mqtt": {
     "server": {
-      "host": "10.200.0.1",
+      "host": "10.180.1.1",
       "port": 1883
     },
     "publish": {
@@ -27,7 +27,7 @@
   },
   "rmt": {
     "rx_pin": 12,
-    "rx_thr_ignore_us": 200,
-    "rx_thr_idle_us": 4500
+    "rx_thr_ignore_us": 250,
+    "rx_thr_idle_us": 5000
   }
 }
