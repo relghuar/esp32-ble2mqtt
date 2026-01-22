@@ -2,6 +2,7 @@
 #include "config.h"
 #include "gatt.h"
 #include <math.h>
+#include <inttypes.h>
 #include <string.h>
 
 #define CASE_STR(x) case x: return #x
@@ -121,9 +122,17 @@ int atouuid(const char *str, ble_uuid_t uuid)
         "%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx",
         &uuid[15], &uuid[14], &uuid[13], &uuid[12],
         &uuid[11], &uuid[10],
-        &uuid[9], &uuid[8], 
+        &uuid[9], &uuid[8],
         &uuid[7], &uuid[6],
         &uuid[5], &uuid[4], &uuid[3], &uuid[2], &uuid[1], &uuid[0]) != 16;
+}
+
+bool ble_uuid_equal(ble_uuid_t uuid1, ble_uuid_t uuid2){
+    return memcmp(uuid1, uuid2, sizeof(ble_uuid_t)) == 0;
+}
+
+bool ble_mac_equal(mac_addr_t mac1, mac_addr_t mac2){
+    return memcmp(mac1, mac2, sizeof(mac_addr_t)) == 0;
 }
 
 static service_desc_t *ble_get_sig_service(ble_uuid_t uuid)
@@ -132,7 +141,7 @@ static service_desc_t *ble_get_sig_service(ble_uuid_t uuid)
 
     for (p = services; p->name; p++)
     {
-        if (memcmp(p->uuid, uuid, sizeof(ble_uuid_t)))
+        if (!ble_uuid_equal(p->uuid, uuid))
             continue;
 
         return p;
@@ -147,7 +156,7 @@ static characteristic_desc_t *ble_get_sig_characteristic(ble_uuid_t uuid)
 
     for (p = characteristics; p->name; p++)
     {
-        if (memcmp(p->uuid, uuid, sizeof(ble_uuid_t)))
+        if (!ble_uuid_equal(p->uuid, uuid))
             continue;
 
         return p;
@@ -297,26 +306,33 @@ char *chartoa(ble_uuid_t uuid, const uint8_t *data, size_t len)
             p += sprintf(p, "%s,", data[i] & 0x01 ? "true" : "false");
             break;
         case CHAR_TYPE_2BIT:
-            p += sprintf(p, "%hhu,", data[i] & 0x03);
+        {
+            int j;
+
+            for (; i < len; i++) {
+                for (j = 0; j < 8; j += 2)
+                    p += sprintf(p, "%" PRIu8 ",", (data[i] >> j) & 0b11);
+            }
             break;
+        }
         case CHAR_TYPE_4BIT:
         case CHAR_TYPE_NIBBLE:
-            p += sprintf(p, "%hhu,", data[i] & 0x0F);
+            p += sprintf(p, "%" PRIu8 ",", data[i] & 0x0F);
             break;
         case CHAR_TYPE_8BIT:
         case CHAR_TYPE_UINT8:
         case CHAR_TYPE_SINT8:
             if (*types == CHAR_TYPE_SINT8)
-                p += sprintf(p, "%hhd,", data[i]);
+                p += sprintf(p, "%" PRId8 ",", data[i]);
             else
-                p += sprintf(p, "%hhu,", data[i]);
+                p += sprintf(p, "%" PRIu8 ",", data[i]);
 
             break;
         case CHAR_TYPE_UINT12:
         {
             uint16_t tmp = (data[i + 1] << 8) | data[i];
 
-            p += sprintf(p, "%hu,", tmp & 0x0FFF);
+            p += sprintf(p, "%" PRIu16 ",", tmp & 0x0FFF);
             break;
         }
         case CHAR_TYPE_16BIT:
@@ -326,9 +342,9 @@ char *chartoa(ble_uuid_t uuid, const uint8_t *data, size_t len)
             uint16_t tmp = (data[i + 1] << 8) | data[i];
 
             if (*types == CHAR_TYPE_SINT16)
-                p += sprintf(p, "%hd,", tmp);
+                p += sprintf(p, "%" PRId16 ",", tmp);
             else
-                p += sprintf(p, "%hu,", tmp);
+                p += sprintf(p, "%" PRIu16 ",", tmp);
 
             break;
         }
@@ -339,9 +355,9 @@ char *chartoa(ble_uuid_t uuid, const uint8_t *data, size_t len)
             uint32_t tmp = (data[i + 2] << 16) | (data[i + 1] << 8) | data[i];
 
             if (*types == CHAR_TYPE_SINT24)
-                p += sprintf(p, "%d,", (int32_t)tmp << 8 >> 8);
+                p += sprintf(p, "%" PRId32 ",", (int32_t)tmp << 8 >> 8);
             else
-                p += sprintf(p, "%u,", tmp);
+                p += sprintf(p, "%" PRIu32 ",", tmp);
 
             break;
         }
@@ -353,9 +369,9 @@ char *chartoa(ble_uuid_t uuid, const uint8_t *data, size_t len)
                 (data[i + 1] << 8) | data[i];
 
             if (*types == CHAR_TYPE_SINT32)
-                p += sprintf(p, "%d,", tmp);
+                p += sprintf(p, "%" PRId32 ",", tmp);
             else
-                p += sprintf(p, "%u,", tmp);
+                p += sprintf(p, "%" PRIu32 ",", tmp);
 
             break;
         }
@@ -364,7 +380,7 @@ char *chartoa(ble_uuid_t uuid, const uint8_t *data, size_t len)
             uint64_t tmp = ((uint64_t)data[i + 4] << 32) | (data[i + 3] << 24) |
                 (data[i + 2] << 16) | (data[i + 1] << 8) | data[i];
 
-            p += sprintf(p, "%llu,", tmp);
+            p += sprintf(p, "%" PRIu64 ",", tmp);
 
             break;
         }
@@ -374,7 +390,7 @@ char *chartoa(ble_uuid_t uuid, const uint8_t *data, size_t len)
                 ((uint64_t)data[i + 4] << 32) | (data[i + 3] << 24) |
                 (data[i + 2] << 16) | (data[i + 1] << 8) | data[i];
 
-            p += sprintf(p, "%llu,", tmp);
+            p += sprintf(p, "%" PRIu64 ",", tmp);
 
             break;
         }
@@ -444,7 +460,7 @@ char *chartoa(ble_uuid_t uuid, const uint8_t *data, size_t len)
     }
 
     for (; i < len; i++)
-        p += sprintf(p, "%u,", data[i]);
+        p += sprintf(p, "%" PRIu8 ",", data[i]);
 
     *(p - 1) = '\0';
     return buf;
@@ -467,9 +483,24 @@ uint8_t *atochar(ble_uuid_t uuid, const char *data, size_t len, size_t *ret_len)
             p += 1;
             break;
         case CHAR_TYPE_2BIT:
-            *p = strtoul(val, NULL, 10) & 0x03;
+        {
+            uint8_t crumb_index = 0;
+
+            p--;
+            while (val != NULL) {
+                uint8_t crumb = strtoul(val, NULL, 10) & 0b11;
+                
+                if ((crumb_index % 4) == 0)
+                    *(++p) = 0;
+                *p |= (crumb << ((crumb_index % 4) * 2));
+
+                val = strtok(NULL, ",");
+                crumb_index++;
+            }
+
             p += 1;
             break;
+        }
         case CHAR_TYPE_4BIT:
         case CHAR_TYPE_NIBBLE:
             *p = strtoul(val, NULL, 10) & 0x0F;
@@ -706,7 +737,7 @@ ble_device_t *ble_device_find_by_mac(ble_device_t *list, mac_addr_t mac)
 
     for (cur = list; cur; cur = cur->next)
     {
-        if (!memcmp(cur->mac, mac, sizeof(mac_addr_t)))
+        if (ble_mac_equal(cur->mac, mac))
             break;
     }
 
@@ -738,7 +769,7 @@ void ble_device_remove_by_mac(ble_device_t **list, mac_addr_t mac)
 
     for (cur = list; *cur; cur = &(*cur)->next)
     {
-        if (!memcmp((*cur)->mac, mac, sizeof(mac_addr_t)))
+        if (ble_mac_equal((*cur)->mac, mac))
             break;
     }
 
@@ -827,7 +858,7 @@ ble_service_t *ble_device_service_find(ble_device_t *device, ble_uuid_t uuid)
 
     for (cur = device->services; cur; cur = cur->next)
     {
-        if (!memcmp(cur->uuid, uuid, sizeof(ble_uuid_t)))
+        if (ble_uuid_equal(cur->uuid, uuid))
             break;
     }
 
@@ -854,7 +885,7 @@ void ble_device_services_free(ble_service_t **list)
 }
 
 ble_characteristic_t *ble_device_characteristic_add(ble_service_t *service,
-    ble_uuid_t uuid, uint16_t handle, uint8_t properties)
+    ble_uuid_t uuid, uint8_t index, uint16_t handle, uint8_t properties)
 {
     ble_characteristic_t *characteristic, **cur;
 
@@ -864,6 +895,7 @@ ble_characteristic_t *ble_device_characteristic_add(ble_service_t *service,
     characteristic->handle = handle;
     characteristic->properties = properties;
     characteristic->client_config_handle = 0;
+    characteristic->index = index;
 
     for (cur = &service->characteristics; *cur; cur = &(*cur)->next);
     *cur = characteristic;
@@ -872,13 +904,13 @@ ble_characteristic_t *ble_device_characteristic_add(ble_service_t *service,
 }
 
 ble_characteristic_t *ble_device_characteristic_find_by_uuid(
-    ble_service_t *service, ble_uuid_t uuid)
+    ble_service_t *service, ble_uuid_t uuid, uint8_t index)
 {
     ble_characteristic_t *cur;
 
     for (cur = service->characteristics; cur; cur = cur->next)
     {
-        if (!memcmp(cur->uuid, uuid, sizeof(ble_uuid_t)))
+        if (ble_uuid_equal(cur->uuid, uuid) && cur->index == index)
             break;
     }
 
@@ -923,7 +955,7 @@ int ble_device_info_get_by_conn_id_handle(ble_device_t *list, uint16_t conn_id,
 {
     if (!(*device = ble_device_find_by_conn_id(list, conn_id)))
         return -1;
-    
+
     for (*service = (*device)->services; *service; *service = (*service)->next)
     {
         for (*characteristic = (*service)->characteristics; *characteristic;
